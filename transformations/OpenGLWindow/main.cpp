@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <cmath>
+#include <limits>
 
 #define GLEW_STATIC
 #include <GL/glew.h>
@@ -85,6 +86,24 @@ static void Orthographic(cy::Matrix4f& out, const float l, const float r, const 
     out.cell[14] = -(f + n) / (f - n);
 }
 
+static void getMinMaxWorld(cy::Vec3f& minWorld, cy::Vec3f& maxWorld, const cy::TriMesh& mesh)
+{
+    constexpr float infinity = std::numeric_limits<float>::infinity();
+    minWorld.Set(infinity);
+    maxWorld.Set(-infinity);
+    for (unsigned short i = 0; i < mesh.NV(); ++i)
+    {
+        const cy::Vec3f v = mesh.V(i);
+        minWorld.x = v.x < minWorld.x ? v.x : minWorld.x;
+        minWorld.y = v.y < minWorld.y ? v.y : minWorld.y;
+        minWorld.z = v.z < minWorld.z ? v.z : minWorld.z;
+        
+        maxWorld.x = v.x > maxWorld.x ? v.x : maxWorld.x;
+        maxWorld.y = v.y > maxWorld.y ? v.y : maxWorld.y;
+        maxWorld.z = v.z > maxWorld.z ? v.z : maxWorld.z;
+    }
+}
+
 static void init(cy::TriMesh& mesh)
 {
     GLuint vao;
@@ -123,7 +142,13 @@ static void draw(uint16_t width, uint16_t height, cy::TriMesh& mesh)
         Orthographic(projMatrix, -1.f, 1.f * aspectRatio, 1.f, -1.f, NEAR_PLANE, FAR_PLANE);
         scaleMatrix = std::move(cy::Matrix3f::Scale(cy::Vec3f(1.f / distanceFromCamera)));
     }
-    prog["mvp"] = projMatrix * translationMatrix * rotZMatrix * rotXMatrix * rotYMatrix * scaleMatrix;
+
+    cy::Vec3f minWorld, maxWorld;
+    getMinMaxWorld(minWorld, maxWorld, mesh);
+    const cy::Vec3f translate = -(minWorld + maxWorld) / 2.f;
+    const cy::Matrix4f translateMeshoriginToWorldOrigin = cy::Matrix4f::Translation(std::move(cy::Vec3f(translate.x, translate.y, translate.z)));
+
+    prog["mvp"] = projMatrix * translationMatrix * rotZMatrix * rotXMatrix * rotYMatrix * scaleMatrix * translateMeshoriginToWorldOrigin;
 
     glDrawArrays(GL_POINTS, 0, mesh.NV());
     deltaTime += 0.05;
