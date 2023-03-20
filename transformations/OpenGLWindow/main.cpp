@@ -19,11 +19,14 @@
 static float rotationAngle = 0.f;
 static float previousX = -1.f;
 static float distanceFromCamera = 50.f;
+static bool bPerspective = true;
 
 static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GL_TRUE);
+    if (key == GLFW_KEY_P && action == GLFW_PRESS)
+        bPerspective = !bPerspective;
 }
 
 static void LMBDragCursorCallback(GLFWwindow* window, double xpos, double ypos)
@@ -68,6 +71,17 @@ static void mouseCallback(GLFWwindow* window, int button, int action, int mods)
     }
 }
 
+static void Orthographic(cy::Matrix4f& out, const float l, const float r, const float t, const float b, const float n, const float f)
+{
+    out = std::move(cy::Matrix4f::Identity());
+    out.cell[0] = 2.f / (r - l);
+    out.cell[5] = 2.f / (t - b);
+    out.cell[10] = -2.f / (f -  n);
+    out.cell[12] = -(r + l) / (r - l);
+    out.cell[13] = -(t + b) / (t - b);
+    out.cell[14] = -(f + n) / (f - n);
+}
+
 static void init(cyGLSLProgram& prog, cy::TriMesh& mesh)
 {
     GLuint vao;
@@ -93,8 +107,20 @@ static void draw(cyGLSLProgram& prog, uint16_t width, uint16_t height, cy::TriMe
     const cy::Matrix3f rotXMatrix = cy::Matrix3f::RotationX(DEG2RAD(rotationAngle));
     const cy::Matrix3f rotYMatrix = cy::Matrix3f::RotationY(DEG2RAD(rotationAngle));
     const cy::Matrix3f rotZMatrix = cy::Matrix3f::RotationZ(DEG2RAD(rotationAngle));
-    const cy::Matrix4f projMatrix = cy::Matrix4f::Perspective(DEG2RAD(40), float(width) / float(height), NEAR_PLANE, FAR_PLANE);
-    prog["mvp"] = projMatrix * translationMatrix * rotZMatrix * rotXMatrix * rotYMatrix;
+    cy::Matrix3f scaleMatrix;
+    cy::Matrix4f projMatrix;
+    if (bPerspective)
+    {
+        projMatrix = std::move(cy::Matrix4f::Perspective(DEG2RAD(40), float(width) / float(height), NEAR_PLANE, FAR_PLANE));
+        scaleMatrix = std::move(cy::Matrix3f::Identity());
+    }
+    else
+    {
+        const float aspectRatio = width / float(height);
+        Orthographic(projMatrix, -1.f, 1.f * aspectRatio, 1.f, -1.f, NEAR_PLANE, FAR_PLANE);
+        scaleMatrix = std::move(cy::Matrix3f::Scale(cy::Vec3f(1.f / distanceFromCamera)));
+    }
+    prog["mvp"] = projMatrix * translationMatrix * rotZMatrix * rotXMatrix * rotYMatrix * scaleMatrix;
 
     glDrawArrays(GL_POINTS, 0, mesh.NV());
     deltaTime += 0.05;
