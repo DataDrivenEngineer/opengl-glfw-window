@@ -20,6 +20,7 @@ static float rotationAngle = 0.f;
 static float previousX = -1.f;
 static float distanceFromCamera = 50.f;
 static bool bPerspective = true;
+static cyGLSLProgram prog;
 
 static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
@@ -27,6 +28,8 @@ static void keyCallback(GLFWwindow* window, int key, int scancode, int action, i
         glfwSetWindowShouldClose(window, GL_TRUE);
     if (key == GLFW_KEY_P && action == GLFW_PRESS)
         bPerspective = !bPerspective;
+    if (key == GLFW_KEY_F6 && action == GLFW_PRESS)
+        prog.BuildFiles("vertex.vert", "fragment.frag");
 }
 
 static void LMBDragCursorCallback(GLFWwindow* window, double xpos, double ypos)
@@ -82,7 +85,7 @@ static void Orthographic(cy::Matrix4f& out, const float l, const float r, const 
     out.cell[14] = -(f + n) / (f - n);
 }
 
-static void init(cyGLSLProgram& prog, cy::TriMesh& mesh)
+static void init(cy::TriMesh& mesh)
 {
     GLuint vao;
     glGenVertexArrays(1, &vao);
@@ -99,7 +102,7 @@ static void init(cyGLSLProgram& prog, cy::TriMesh& mesh)
     prog.SetAttribBuffer("pos", vao, 3);
 }
 
-static void draw(cyGLSLProgram& prog, uint16_t width, uint16_t height, cy::TriMesh& mesh)
+static void draw(uint16_t width, uint16_t height, cy::TriMesh& mesh)
 {
     static float deltaTime{};
 
@@ -148,9 +151,8 @@ int main()
 
     CY_GL_REGISTER_DEBUG_CALLBACK
 
-    cyGLSLProgram prog;
     cy::TriMesh mesh;
-    init(prog, mesh);
+    init(mesh);
     
     glfwSetKeyCallback(window, keyCallback);
     glfwSetMouseButtonCallback(window, mouseCallback);
@@ -159,7 +161,7 @@ int main()
     {
         glClear(GL_COLOR_BUFFER_BIT);
         prog.Bind();
-        draw(prog, width, height, mesh);
+        draw(width, height, mesh);
         glfwSwapInterval(1);
         glfwSwapBuffers(window);
         
