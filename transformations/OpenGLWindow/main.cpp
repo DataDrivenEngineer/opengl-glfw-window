@@ -146,9 +146,9 @@ static void draw(uint16_t width, uint16_t height, cy::TriMesh& mesh)
     cy::Vec3f minWorld, maxWorld;
     getMinMaxWorld(minWorld, maxWorld, mesh);
     const cy::Vec3f translate = -(minWorld + maxWorld) / 2.f;
-    const cy::Matrix4f translateMeshoriginToWorldOrigin = cy::Matrix4f::Translation(std::move(cy::Vec3f(translate.x, translate.y, translate.z)));
+    const cy::Matrix4f translateMeshOriginToWorldOrigin = cy::Matrix4f::Translation(std::move(cy::Vec3f(translate.x, translate.y, translate.z)));
 
-    prog["mvp"] = projMatrix * translationMatrix * rotZMatrix * rotXMatrix * rotYMatrix * scaleMatrix * translateMeshoriginToWorldOrigin;
+    prog["mvp"] = projMatrix * translationMatrix * rotZMatrix * rotXMatrix * rotYMatrix * scaleMatrix * translateMeshOriginToWorldOrigin;
 
     glDrawArrays(GL_POINTS, 0, mesh.NV());
     deltaTime += 0.05;
