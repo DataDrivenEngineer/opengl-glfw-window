@@ -1,3 +1,5 @@
+#pragma once
+
 #include "RenderingSettings.hpp"
 
 unsigned short screenWidth = 1980;
