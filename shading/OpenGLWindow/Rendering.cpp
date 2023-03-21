@@ -40,7 +40,6 @@ void getUniversalTransformationMatrix(cy::Matrix4f& matrixOut, const cy::TriMesh
     const cy::Matrix4f translationMatrix = cy::Matrix4f::Translation(cy::Vec3f(0, 0, -distanceFromCamera));
     const cy::Matrix3f rotXMatrix = cy::Matrix3f::RotationX(DEG2RAD(rotationAngle));
     const cy::Matrix3f rotYMatrix = cy::Matrix3f::RotationY(DEG2RAD(rotationAngle));
-    const cy::Matrix3f rotZMatrix = cy::Matrix3f::RotationZ(DEG2RAD(rotationAngle));
     cy::Matrix3f scaleMatrix;
     cy::Matrix4f projMatrix;
     if (bPerspective)
@@ -60,5 +59,5 @@ void getUniversalTransformationMatrix(cy::Matrix4f& matrixOut, const cy::TriMesh
     const cy::Vec3f translate = -(minWorld + maxWorld) / 2.f;
     const cy::Matrix4f translateMeshOriginToWorldOrigin = cy::Matrix4f::Translation(std::move(cy::Vec3f(translate.x, translate.y, translate.z)));
 
-    matrixOut = projMatrix * translationMatrix * rotZMatrix * rotXMatrix * rotYMatrix * scaleMatrix * translateMeshOriginToWorldOrigin;
+    matrixOut = projMatrix * translationMatrix * rotXMatrix * rotYMatrix * scaleMatrix * translateMeshOriginToWorldOrigin;
 }
